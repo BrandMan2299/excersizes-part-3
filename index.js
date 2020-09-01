@@ -1,6 +1,8 @@
 const express = require('express')
 const app = express()
+require('dotenv').config()
 const morgan = require('morgan')
+const Person = require('./models/person')
 
 app.use(express.json())
 app.use(express.static('./client/build'))
@@ -8,69 +10,48 @@ app.use(express.static('./client/build'))
 morgan.token('body', (req, res) => { return JSON.stringify(req.body) })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'));
 
-let phoneBook = [
-    {
-        id: 1,
-        name: "itai",
-        phone: "054-798-8833"
-    },
-    {
-        id: 2,
-        name: "nir",
-        phone: "054-987-6543"
-    },
-    {
-        id: 5,
-        name: "bob",
-        phone: "054-123-4567"
-    },
-]
 app.get("/api/persons", (req, res) => {
-    res.json(phoneBook);
+    Person.find({}).then(phoneBook => {
+        res.json(phoneBook);
+    })
 })
 
 app.post("/api/persons", (req, res) => {
     const body = req.body;
-    if (!body.phone || !body.name) {
+    if (!body.number || !body.name) {
         return res.status(400).json({
             error: 'phone or name missing'
         })
     }
-    if (phoneBook.some(dude => dude.name === body.name)) {
-        return res.status(400).json({ error: 'name must be unique' })
-    }
-    const id = Math.floor(Math.random() * 100) + 1;
-    const person = {
-        id: id,
+    const person = new Person({
         name: body.name,
-        phone: body.phone
-    }
-    phoneBook.push(person);
-    res.json(person);
-})
+        phone: body.number
+    })
 
-app.delete("/api/persons/:id", (req, res) => {
-    const id = Number(req.params.id)
-    phoneBook = phoneBook.filter(dude => dude.id !== id)
-
-    res.status(204).end();
+    person.save().then(savedPerson => {
+        console.log('person saved!')
+        console.log(savedPerson)
+        res.json(savedPerson)
+    })
 })
 
 app.get("/api/persons/:id", (req, res) => {
-    const id = Number(req.params.id);
-    const dude = phoneBook.find(person => person.id === id)
-    if (dude) {
-        res.json(dude);
-    }
-    else {
-        res.status(404).end();
-    }
+    Person.findById(request.params.id).then(person => {
+        res.json(person)
+    })
 })
+// app.delete("/api/persons/:id", (req, res) => {
+//     const id = Number(req.params.id)
+//     phoneBook = phoneBook.filter(dude => dude.id !== id)
 
-app.get("/info", (req, res) => {
-    res.send(`phoneBook has ${phoneBook.length} pepole in it
-    ${new Date()}`);
-})
+//     res.status(204).end();
+// })
+
+
+// app.get("/info", (req, res) => {
+//     res.send(`phoneBook has ${phoneBook.length} pepole in it
+//     ${new Date()}`);
+// })
 
 const unknownEndpoint = (req, res) => {
     res.status(404).send({ error: 'unknown endpoint' })

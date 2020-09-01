@@ -24,6 +24,7 @@
   "homepage": "https://github.com/BrandMan2299/excersizes-part-3#readme",
   "dependencies": {
     "express": "^4.17.1",
+    "mongoose": "^5.10.2",
     "morgan": "^1.10.0"
   },
   "devDependencies": {
